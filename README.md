@@ -4,6 +4,33 @@
 
 ---
 
+## 工作流程 / Workflow
+
+```mermaid
+flowchart TD
+    A["漏洞已验证确认（有 PoC、打到真实危害）"] --> B["触发：/report 或「写报告」"]
+    B --> C{"① 查重<br/>同资产+同根因+同接口+同影响面?"}
+    C -->|"撞车"| C1["不新写 → 补强旧报告 / 换资产"]
+    C -->|"无重复"| D{"② 分层验证门<br/>硬门 + 类型命门"}
+    D -->|"硬门缺一"| D1["打回继续验证，不允许开写"]
+    D -->|"全过"| E["③ 生成 DOCX<br/>章节骨架 + Step 式 PoC + 真实截图"]
+    E --> F["④ 语义化命名 + 归档"]
+    F --> G{"平台审核"}
+    G -->|"驳回"| H["⑤ 底部追加申诉证据（不重写）"]
+    G -->|"通过"| I["收录 ✓"]
+```
+
+## 效果预览 / Demo
+
+> 演示对象为虚构靶标 `demo-shop.example`，仅展示生成报告的版式与结构。
+> Demo uses a fictional target to showcase the layout of generated reports.
+
+| 报告首页（章节骨架） | PoC 步骤页（Step + 请求块 + 截图） |
+|---|---|
+| ![demo page 1](docs/demo-1.png) | ![demo page 2](docs/demo-2.png) |
+
+---
+
 ## English
 
 A Claude Code skill that turns **confirmed** vulnerabilities into submission-ready **DOCX** reports for SRC (Security Response Center) and 0day platforms.
@@ -47,7 +74,9 @@ or "写报告 / 出报告 / 成稿 / 生成漏洞报告". The skill triggers aut
 ### Requirements
 
 - `python-docx`: `pip install python-docx`
-- Screenshots: a browser (open the original URL) or Burp Suite Repeater
+- Screenshots — the AI can only capture screenshots if it has a browser tool. Two modes:
+  - **Auto (recommended)**: give Claude Code a browser MCP, e.g. Playwright: `claude mcp add playwright -- npx @playwright/mcp@latest`. The AI then opens original URLs and captures each step itself.
+  - **Manual fallback**: without any browser tool, the skill detects this and asks you to save each step's screenshot into `shots/` — it embeds them for you. It will never fabricate a render or silently skip a screenshot.
 
 ### Notes
 
@@ -99,7 +128,9 @@ cp -r vuln-report-skill ~/.claude/skills/report
 ### 依赖
 
 - `python-docx`（生成 DOCX）：`pip install python-docx`
-- 截图来源：浏览器（打开原始 URL）或 Burp Suite Repeater
+- 截图——AI 手里有浏览器工具才能自动截图，两种模式：
+  - **自动（推荐）**：给 Claude Code 装一个浏览器 MCP，例如 Playwright：`claude mcp add playwright -- npx @playwright/mcp@latest`，AI 就能自己打开原始 URL 逐步截图。
+  - **手动降级**：没装任何浏览器工具时，skill 会检测到并改成"你把每步截图存进 `shots/` 目录，我来嵌入"。绝不会自造渲染图，也不会静默跳过截图。
 
 ### 快速上手（完整流程示例）
 
