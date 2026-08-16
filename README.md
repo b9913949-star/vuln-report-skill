@@ -74,9 +74,9 @@ or "写报告 / 出报告 / 成稿 / 生成漏洞报告". The skill triggers aut
 ### Requirements
 
 - `python-docx`: `pip install python-docx`
-- Screenshots — the AI can only capture screenshots if it has a browser tool. Two modes:
+- Screenshots — the AI can only capture screenshots if it has a browser tool. At startup the skill **auto-detects** available browser MCPs (Playwright / chrome-devtools / Puppeteer / etc.) and uses whatever it finds. If none:
   - **Auto (recommended)**: give Claude Code a browser MCP, e.g. Playwright: `claude mcp add playwright -- npx @playwright/mcp@latest`. The AI then opens original URLs and captures each step itself.
-  - **Manual fallback**: without any browser tool, the skill detects this and asks you to save each step's screenshot into `shots/` — it embeds them for you. It will never fabricate a render or silently skip a screenshot.
+  - **Manual fallback**: if you don't install one, the skill switches to asking you to save each step's screenshot into `shots/` — it embeds them for you. It will never fabricate a render or silently skip a screenshot.
 
 ### Notes
 
@@ -128,9 +128,9 @@ cp -r vuln-report-skill ~/.claude/skills/report
 ### 依赖
 
 - `python-docx`（生成 DOCX）：`pip install python-docx`
-- 截图——AI 手里有浏览器工具才能自动截图，两种模式：
+- 截图——AI 手里有浏览器工具才能自动截图。skill 开工时会**自动检测**当前环境里可用的浏览器类 MCP（Playwright / chrome-devtools / Puppeteer 等），检测到什么就用什么。都没有则：
   - **自动（推荐）**：给 Claude Code 装一个浏览器 MCP，例如 Playwright：`claude mcp add playwright -- npx @playwright/mcp@latest`，AI 就能自己打开原始 URL 逐步截图。
-  - **手动降级**：没装任何浏览器工具时，skill 会检测到并改成"你把每步截图存进 `shots/` 目录，我来嵌入"。绝不会自造渲染图，也不会静默跳过截图。
+  - **手动降级**：不装工具时，skill 会改成"你把每步截图存进 `shots/` 目录，我来嵌入"。绝不会自造渲染图，也不会静默跳过截图。
 
 ### 快速上手（完整流程示例）
 
