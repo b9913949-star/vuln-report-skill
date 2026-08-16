@@ -22,12 +22,12 @@ flowchart TD
 
 ## 效果预览 / Demo
 
-> 演示对象为虚构靶标 `demo-shop.example`，仅展示生成报告的版式与结构。
-> Demo uses a fictional target to showcase the layout of generated reports.
+> 演示对象为虚构靶标 `demo-shop.example`，仅展示生成报告的版式与结构；第 3 张为公共靶场（AltoroJ / demo.testfire.net）实拍，演示真实浏览器渲染页的嵌入效果。
+> Demo uses a fictional target to showcase the layout of generated reports; page 3 is a real browser capture from a public practice target, showing how rendered pages are embedded.
 
-| 报告首页（章节骨架） | PoC 步骤页（Step + 请求块 + 截图） |
-|---|---|
-| ![demo page 1](docs/demo-1.png) | ![demo page 2](docs/demo-2.png) |
+| 报告首页（章节骨架） | PoC 步骤页（Step + 请求块 + JSON 截图） | PoC 步骤页（真实浏览器渲染截图） |
+|---|---|---|
+| ![demo page 1](docs/demo-1.png) | ![demo page 2](docs/demo-2.png) | ![demo page 3](docs/demo-3.png) |
 
 ---
 
