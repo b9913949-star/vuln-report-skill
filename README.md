@@ -8,7 +8,10 @@
 
 ```mermaid
 flowchart TD
-    A["漏洞已验证确认（有 PoC、打到真实危害）"] --> B["触发：/report 或「写报告」"]
+    A0["挖掘中遇到信号"] --> A1{"⓪ 信号快筛<br/>止损 / 待验证 / 候选"}
+    A1 -->|"明显不够格"| A2["当场止损，不烧 token 深挖"]
+    A1 -->|"候选漏洞"| A["验证确认（有 PoC、打到真实危害）"]
+    A --> B["触发：/report 或「写报告」"]
     B --> C{"① 查重<br/>同资产+同根因+同接口+同影响面?"}
     C -->|"撞车"| C1["不新写 → 补强旧报告 / 换资产"]
     C -->|"无重复"| D{"② 分层验证门<br/>硬门 + 类型命门"}
@@ -39,11 +42,11 @@ It doesn't find vulnerabilities — it makes sure the **report** is good enough 
 
 ### What it enforces
 
-- **Layered verification gates**: hard gates (reproducible PoC / impact driven to the final harm / server-side confirmation / falsification tests) + per-type criteria (data leak, IDOR, RCE, SSRF, injection — each has its own minimum bar) + 0day acceptance gates (latest-version check / case count / submission discipline). No gate, no report — this filters out "signal ≠ vulnerability" garbage at the source.
+- **Two-stage review**: a lightweight signal triage runs **while digging** (stop-loss on dead ends before burning tokens on verification) + full layered verification gates before writing (hard gates: reproducible PoC / impact driven to the final harm / server-side confirmation / falsification tests; per-type criteria for data leak, IDOR, RCE, SSRF, injection; 0day acceptance gates). No gate, no report — this filters out "signal ≠ vulnerability" garbage at the source.
 - **Dual readability standard**: a product manager can reproduce it step by step; a security engineer finds it technically solid. Both or rework.
 - **Fixed DOCX layout**: `template.docx` ships all styles (Heading 2 sections, uniform black, linear plain document), generated section by section with python-docx.
-- **Step-style PoC spec**: every step = one-line title + context + raw Burp HTTP request block (no curl) + conclusion + real screenshot.
-- **Screenshot ironclad rule**: every step needs a real screenshot from the live target (browser on the original URL / Burp Repeater). Fabricated renders are forbidden.
+- **Step-style PoC spec**: every step = one-line title + context + raw HTTP request block copied from any proxy tool (Burp / Yakit / mitmproxy — no curl) + conclusion + real screenshot.
+- **Screenshot ironclad rule**: every step needs a real screenshot from the live target; fabricated renders are forbidden. Captures run **fully in the background** (headless / CDP) — no browser or proxy window is ever yanked to the foreground. Packet evidence is embedded as raw text blocks; if the proxy UI is screenshotted, it must be the request/response detail pane, never the history list.
 - **Anti-AI-tone rules**: kills template phrasing, filler words, and boilerplate — platform reviewers use AI detection plus human intuition, and template-tone reports get downgraded.
 - **Full workflow**: dedup check → gates → DOCX generation → semantic naming → archiving → update-vs-appeal handling → cleanup.
 
@@ -74,9 +77,10 @@ or "写报告 / 出报告 / 成稿 / 生成漏洞报告". The skill triggers aut
 ### Requirements
 
 - `python-docx`: `pip install python-docx`
-- Screenshots — the AI can only capture screenshots if it has a browser tool. At startup the skill **auto-detects** available browser MCPs (Playwright / chrome-devtools / Puppeteer / etc.) and uses whatever it finds. If none:
+- Screenshots — the AI can only capture screenshots if it has a browser tool. At startup the skill **auto-detects** available browser MCPs (Playwright / chrome-devtools / Puppeteer / etc.) and uses whatever it finds, capturing **in the background without stealing window focus**. If none:
   - **Auto (recommended)**: give Claude Code a browser MCP, e.g. Playwright: `claude mcp add playwright -- npx @playwright/mcp@latest`. The AI then opens original URLs and captures each step itself.
   - **Manual fallback**: if you don't install one, the skill switches to asking you to save each step's screenshot into `shots/` — it embeds them for you. It will never fabricate a render or silently skip a screenshot.
+  - `shots/` is temporary: images are embedded into the DOCX, and the folder is deleted when the report is finished.
 
 ### Notes
 
@@ -93,11 +97,11 @@ or "写报告 / 出报告 / 成稿 / 生成漏洞报告". The skill triggers aut
 
 ### 它约束什么
 
-- **分层验证门**：硬门（PoC 可复现 / 危害打到链路终局 / 服务端确认 / 证伪实验）+ 按类型命门表（数据泄露、越权、RCE、SSRF、注入…各自的最低收录标准）+ 0day 收录审查门（版本公开性 / 案例数 / 投递纪律）。不过门不成稿，从源头挡掉"信号当漏洞"的垃圾报告。
+- **双重审查机制**：第一道在**挖掘过程中**跑——遇到信号先快筛（明显不够格的当场止损，不浪费 token 深挖）；第二道在成稿前跑——完整分层验证门（硬门 / 按类型命门表 / 0day 收录审查门）。不过门不成稿，从源头挡掉"信号当漏洞"的垃圾报告。
 - **双重可读写作标准**：产品经理照着 Step 能复现，安全工程师看完觉得技术扎实——两个维度缺一返工。
 - **固定 DOCX 版式**：`template.docx` 内置全部样式（微软雅黑、Heading 2 章节、全文统一黑色），python-docx 逐节生成，朴素线性文档，不堆表格卡片。
-- **Step 式 PoC 规格**：每步 = 一句话标题 + 操作上下文 + Burp 原始请求块（不放 curl）+ 结果结论 + 真实截图。
-- **截图铁律**：每步必须配真实目标截图（浏览器开原始 URL / Burp Repeater 实响应），严禁自造渲染。
+- **Step 式 PoC 规格**：每步 = 一句话标题 + 操作上下文 + 原始请求块（从 Burp/Yakit 等任意抓包工具原文复制，不放 curl）+ 结果结论 + 真实截图。
+- **截图铁律**：每步必须配真实目标截图，严禁自造渲染。截图**全程后台完成**（headless/CDP），不把浏览器或抓包工具窗口弹到前台；数据包以原始文本块入报告，截工具界面时只截请求/响应详情面板，不截历史列表。
 - **简洁硬规 + 去 AI 腔硬规**：消灭八股标签、填充语、形容词渲染、模板化句式——平台 AI 检测和人工直觉都会筛掉模板腔报告。
 - **完整成稿流程**：查重 → 过验证门 → 生成 DOCX → 语义化命名 → 归档 → 更新/驳回两种处理 → 收尾清理。
 
@@ -128,9 +132,10 @@ cp -r vuln-report-skill ~/.claude/skills/report
 ### 依赖
 
 - `python-docx`（生成 DOCX）：`pip install python-docx`
-- 截图——AI 手里有浏览器工具才能自动截图。skill 开工时会**自动检测**当前环境里可用的浏览器类 MCP（Playwright / chrome-devtools / Puppeteer 等），检测到什么就用什么。都没有则：
+- 截图——AI 手里有浏览器工具才能自动截图。skill 开工时会**自动检测**当前环境里可用的浏览器类 MCP（Playwright / chrome-devtools / Puppeteer 等），检测到什么就用什么，**全程后台截图不抢窗口焦点**。都没有则：
   - **自动（推荐）**：给 Claude Code 装一个浏览器 MCP，例如 Playwright：`claude mcp add playwright -- npx @playwright/mcp@latest`，AI 就能自己打开原始 URL 逐步截图。
   - **手动降级**：不装工具时，skill 会改成"你把每步截图存进 `shots/` 目录，我来嵌入"。绝不会自造渲染图，也不会静默跳过截图。
+  - `shots/` 是临时目录：图片已内嵌 DOCX，报告成稿后该目录自动清除。
 
 ### 快速上手（完整流程示例）
 
@@ -145,10 +150,10 @@ Claude:（自动触发本 skill）
   2. 过验证门 —— 逐条核对硬门/类型命门，不够格会直接告诉你缺什么
   3. 生成 DOCX —— 按固定版式：章节骨架 + Step 式 PoC + 内嵌截图
   4. 语义化命名 ——「api.example.com 存在订单接口越权读取他人敏感信息漏洞.docx」
-  5. 归档到 reports/<单位>src/，截图存 shots/ 备查
+  5. 归档到 reports/<单位>src/；shots/ 截图目录成稿后自动清除（图片已内嵌 DOCX）
 ```
 
-产物只有一份 DOCX（+ 截图目录），可以直接交平台。被驳回后说"报告被驳回了，补充申诉证据"，会走底部追加模式而不是重写。
+产物只有一份 DOCX，可以直接交平台。被驳回后说"报告被驳回了，补充申诉证据"，会走底部追加模式而不是重写。
 
 **它会拒绝写什么**：只有信号没到终局危害的、自己测试账号的数据、P3 以下、CORS/安全头类——验证门会直接拦下并说明原因，不会硬凑一份垃圾报告。
 
